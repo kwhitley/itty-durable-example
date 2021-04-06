@@ -1,0 +1,29 @@
+account_id = "ac29ce961091a45f22b60d762e3e33a8"
+zone_id = "92425ae93828ef81948967142d28db13"
+name = "do-todos"
+type = "javascript"
+workers_dev = false
+routes = [
+  "do.slick.af/*",
+  "do.slick.af"
+]
+kv-namespaces = [
+  { binding = "ROE", id = "53b0376b79bc461599a1e0a0af24083b" }
+]
+
+[durable_objects]
+bindings = [
+  { name = "TODOS", class_name = "Todos" },
+  { name = "Foo", class_name = "Foo" }
+]
+
+[build]
+upload_format = "modules"
+command = "npm install && npm run build"
+cwd = "."
+watch_dir = "src"
+upload_dir = "dist"
+upload_include = []
+upload_exclude = ["*.map"]
+
+
