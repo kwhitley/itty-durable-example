@@ -20,7 +20,7 @@ var __toModule = (module) => {
 
 // node_modules/itty-router-extras/dist/middleware/withContent.js
 var require_withContent = __commonJS((exports, module) => {
-  var withContent3 = async (t) => {
+  var withContent4 = async (t) => {
     let n = t.headers.get("content-type");
     t.content = void 0;
     try {
@@ -28,7 +28,7 @@ var require_withContent = __commonJS((exports, module) => {
     } catch (t2) {
     }
   };
-  module.exports = {withContent: withContent3};
+  module.exports = {withContent: withContent4};
 });
 
 // node_modules/itty-router-extras/dist/middleware/withCookies.js
@@ -45,10 +45,10 @@ var require_withCookies = __commonJS((exports, module) => {
 
 // node_modules/itty-router-extras/dist/middleware/withParams.js
 var require_withParams = __commonJS((exports, module) => {
-  var withParams3 = (a) => {
+  var withParams4 = (a) => {
     Object.assign(a, a.params || {});
   };
-  module.exports = {withParams: withParams3};
+  module.exports = {withParams: withParams4};
 });
 
 // node_modules/itty-router-extras/dist/middleware/index.js
@@ -68,14 +68,14 @@ var require_createResponseType = __commonJS((exports, module) => {
 // node_modules/itty-router-extras/dist/response/json.js
 var require_json = __commonJS((exports, module) => {
   var {createResponseType} = require_createResponseType();
-  var json4 = createResponseType("application/json; charset=utf-8");
-  module.exports = {json: json4};
+  var json5 = createResponseType("application/json; charset=utf-8");
+  module.exports = {json: json5};
 });
 
 // node_modules/itty-router-extras/dist/response/error.js
 var require_error = __commonJS((exports, module) => {
-  var {json: json4} = require_json();
-  var error3 = (r = 500, o = "Internal Server Error.") => json4({error: o, status: r}, {status: r});
+  var {json: json5} = require_json();
+  var error3 = (r = 500, o = "Internal Server Error.") => json5({error: o, status: r}, {status: r});
   module.exports = {error: error3};
 });
 
@@ -88,15 +88,15 @@ var require_missing = __commonJS((exports, module) => {
 
 // node_modules/itty-router-extras/dist/response/status.js
 var require_status = __commonJS((exports, module) => {
-  var {json: json4} = require_json();
-  var status2 = (s, t) => t ? json4({message: t}, {status: s}) : new Response(null, {status: s});
+  var {json: json5} = require_json();
+  var status2 = (s, t) => t ? json5({message: t}, {status: s}) : new Response(null, {status: s});
   module.exports = {status: status2};
 });
 
 // node_modules/itty-router-extras/dist/response/text.js
 var require_text = __commonJS((exports, module) => {
-  var text = (e, t = {}) => new Response(e, t);
-  module.exports = {text};
+  var text2 = (e, t = {}) => new Response(e, t);
+  module.exports = {text: text2};
 });
 
 // node_modules/itty-router-extras/dist/response/index.js
@@ -136,12 +136,12 @@ var require_router = __commonJS((exports, module) => {
 
 // node_modules/itty-router-extras/dist/classes/StatusError.js
 var require_StatusError = __commonJS((exports, module) => {
-  var StatusError3 = class extends Error {
+  var StatusError4 = class extends Error {
     constructor(r = 500, t = "Internal Error.") {
       super(t), this.name = "StatusError", this.status = r;
     }
   };
-  module.exports = {StatusError: StatusError3};
+  module.exports = {StatusError: StatusError4};
 });
 
 // node_modules/itty-router-extras/dist/classes/index.js
@@ -563,29 +563,44 @@ var KVStore = class {
 // Todos.js
 var import_itty_router_extras3 = __toModule(require_dist());
 
-// DurableObject.js
+// class/IttyDurable.js
 var import_itty_router_extras2 = __toModule(require_dist());
 var import_itty_router = __toModule(require_itty_router_min());
-var DurableObject = class {
+var IttyDurable = class {
   constructor(state, env) {
     this.state = state;
+    this.$ = {
+      defaultState: void 0
+    };
     this.router = (0, import_itty_router_extras2.ThrowableRouter)();
+    this.router.post("/:action/:target", import_itty_router_extras2.withParams, import_itty_router_extras2.withContent, async (request, env2) => {
+      const {action, target, content = []} = request;
+      if (action === "call") {
+        const response = await this[target](...content);
+        if (response) {
+          return response instanceof Response ? response : (0, import_itty_router_extras2.json)(response);
+        }
+      } else if (action === "set") {
+        this[target] = content;
+      }
+    }, () => this.persist()).all("*", () => (0, import_itty_router_extras2.json)(this));
     return new Proxy(this, {
       get: (obj, prop) => typeof obj[prop] === "function" ? obj[prop].bind(this) : obj[prop]
     });
   }
   getPersistable() {
-    const {state, router: router2, initializePromise, ...persistable} = this;
+    const {$, state, router: router2, initializePromise, ...persistable} = this;
     return persistable;
   }
   async persist() {
     this.modified = new Date();
-    await this.state.storage.put("value", {
+    await this.state.storage.put("data", {
       ...this.getPersistable()
     });
   }
   async initialize() {
-    const stored = await this.state.storage.get("value") || {};
+    this.$.defaultState = JSON.stringify(this.getPersistable());
+    const stored = await this.state.storage.get("data") || {};
     Object.assign(this, stored);
     this.created = this.created || new Date();
   }
@@ -606,20 +621,64 @@ var DurableObject = class {
         delete this[key];
       }
     }
+    Object.assign(this, JSON.parse(this.$.defaultState));
   }
   toJSON() {
     return this.getPersistable();
   }
 };
+var withDurables = (request, env) => {
+  request.durables = {
+    get: (Class, id) => {
+      try {
+        if (typeof id === "string") {
+          id = env[Class.name].idFromName(id);
+        }
+        const stub = env[Class.name].get(id);
+        const mock = new Class();
+        return new Proxy(stub, {
+          get: (obj, prop) => {
+            const origin = mock[prop];
+            return typeof origin === "function" && prop !== "fetch" ? (...args) => {
+              const url = "https://itty-durable/call/" + prop;
+              const req = {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify(args)
+              };
+              return obj.fetch(url, req);
+            } : obj[prop];
+          },
+          set: async (obj, prop, value) => {
+            const url = "https://itty-durable/set/" + prop;
+            const req = {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify(value)
+            };
+            return await obj.fetch(url, req);
+            return true;
+          }
+        });
+      } catch (err) {
+        throw new StatusError(500, "Could not find a matching Durable Object");
+      }
+    }
+  };
+};
 
 // Todos.js
-var Todos = class extends DurableObject {
+var Todos = class extends IttyDurable {
   constructor(state, env) {
     super(state, env);
     this.items = [];
     this.isLoggedIn = true;
     const router2 = this.router = (0, import_itty_router_extras3.ThrowableRouter)({base: "/todos/:namespace"});
-    router2.get("/create/:text", import_itty_router_extras3.withParams, async ({namespace, text}) => (0, import_itty_router_extras3.json)(await this.add(text))).get("/", import_itty_router_extras3.withParams, ({namespace}) => (0, import_itty_router_extras3.json)({namespace, items: this.items})).get("/:id", import_itty_router_extras3.withParams, async ({namespace, id}) => {
+    router2.get("/create/:text", import_itty_router_extras3.withParams, async ({namespace, text: text2}) => (0, import_itty_router_extras3.json)(await this.add(text2))).get("/", import_itty_router_extras3.withParams, ({namespace}) => (0, import_itty_router_extras3.json)({namespace, items: this.items})).get("/:id", import_itty_router_extras3.withParams, async ({namespace, id}) => {
       const todo = await this.get(id);
       if (todo) {
         return (0, import_itty_router_extras3.json)({namespace, ...todo});
@@ -631,10 +690,10 @@ var Todos = class extends DurableObject {
       persistable: this.getPersistable()
     })).get("*", () => (0, import_itty_router_extras3.missing)("Are you sure about that?"));
   }
-  async add(text) {
+  async add(text2) {
     const todo = {
       id: this.items.length,
-      text
+      text: text2
     };
     this.items = [...this.items, todo];
     await this.persist();
@@ -646,9 +705,9 @@ var Todos = class extends DurableObject {
   }
 };
 
-// Foo.js
+// durable/Foo.js
 var import_itty_router_extras4 = __toModule(require_dist());
-var Foo = class extends DurableObject {
+var Foo = class extends IttyDurable {
   constructor(state, env) {
     super(state, env);
     this.router.all("*", this.incrementCounter).get("/reset", this.reset).patch("*", import_itty_router_extras4.withContent, ({content = {}}) => {
@@ -665,9 +724,6 @@ var Foo = class extends DurableObject {
     this.counter = 0;
   }
 };
-
-// index.js
-var router = (0, import_itty_router_extras5.ThrowableRouter)();
 var withFoo = (request, env) => {
   const {namespace} = request;
   if (namespace) {
@@ -675,7 +731,53 @@ var withFoo = (request, env) => {
     request.Foo = env.Foo.get(id);
   }
 };
-router.all("/foo/:namespace/:action?", import_itty_router_extras5.withParams, withFoo, (request, env) => request.Foo.fetch("https://slick/" + (request.action || ""), request)).all("/foo/:namespace/:action?", import_itty_router_extras5.withParams, withFoo, async (request, env) => {
+
+// durable/Magic.js
+var Magic = class extends IttyDurable {
+  constructor(state, env) {
+    super(state, env);
+    this.counter = 0;
+  }
+  increment() {
+    this.counter++;
+  }
+  getTime() {
+    return {now: new Date()};
+  }
+  add(a, b) {
+    return a + b;
+  }
+};
+
+// index.js
+var router = (0, import_itty_router_extras5.ThrowableRouter)();
+router.get("/do-stuff-with-magic/:foo?", withDurables, import_itty_router_extras5.withParams, async ({durables, foo}) => {
+  const magic = durables.get(Magic, "test");
+  await Promise.all([
+    magic.increment(),
+    magic.increment(),
+    magic.increment()
+  ]);
+  await magic.increment();
+  await (magic.foo = foo || "bar");
+  return magic.toJSON();
+}).get("/magic", withDurables, ({durables}) => durables.get(Magic, "test").toJSON()).get("/magic/reset", withDurables, ({durables}) => durables.get(Magic, "test").clear()).get("/magic/set/:what/:value", import_itty_router_extras5.withParams, withDurables, async ({what, value, durables}) => {
+  const magic = durables.get(Magic, "test");
+  value = Number(value) || value;
+  await (magic[what] = value);
+  return magic.toJSON();
+}).get("/magic/:action/:a?/:b?", withDurables, import_itty_router_extras5.withParams, async ({durables, action, a, b}) => {
+  const durable = durables.get(Magic, "test");
+  a = Number(a) || a;
+  b = Number(b) || b;
+  await Promise.all([
+    durable.increment(),
+    durable.increment(),
+    durable.increment()
+  ]);
+  await (durable.foo = "bar");
+  return await durable.toJSON();
+}).all("/foo/:namespace/:action?", import_itty_router_extras5.withParams, withFoo, async (request, env) => {
   const {namespace, action, Foo: Foo2} = request;
   const kv = new KVStore({
     path: "Foo",
@@ -700,12 +802,11 @@ router.all("/foo/:namespace/:action?", import_itty_router_extras5.withParams, wi
   return response;
 }).all("*", () => (0, import_itty_router_extras5.missing)("Are you sure about that?"));
 var todos_default = {
-  fetch(request, env) {
-    return router.handle(request, env);
-  }
+  fetch: router.handle
 };
 export {
   Foo,
+  Magic,
   Todos,
   todos_default as default
 };

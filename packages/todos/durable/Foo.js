@@ -1,8 +1,8 @@
 import { json, withContent } from 'itty-router-extras'
 
-import { DurableObject } from './DurableObject.js'
+import { IttyDurable } from '../class/IttyDurable.js'
 
-export class Foo extends DurableObject {
+export class Foo extends IttyDurable {
   constructor(state, env) {
     super(state, env)
 
@@ -41,3 +41,11 @@ export class Foo extends DurableObject {
   }
 }
 
+export const withFoo = (request, env) => {
+  const { namespace } = request
+
+  if (namespace) {
+    const id = env.Foo.idFromName(namespace)
+    request.Foo = env.Foo.get(id)
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "durable-objects",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "classes",
+    "stores",
+    "utils",
+    "packages/todos"
+  ],
+  "scripts": {
+    "deploy": "npx lerna run deploy"
+  },
+  "dependencies": {
+    "buffer-image-size": "^0.6.4",
+    "deepmerge": "^4.2.2",
+    "dropbox": "^4.0.30",
+    "file-type": "^14.7.0",
+    "image-size": "^0.9.3",
+    "jimp": "^0.16.1",
+    "jsonwebtoken": "^8.5.1",
+    "object-merge": "^2.5.1",
+    "supergeneric": "^1.1.0",
+    "twilio": "^3.54.1",
+    "utils": "^1.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/kv-asset-handler": "^0.1.0",
+    "@cloudflare/wrangler": "^1.12.3",
+    "lerna": "^3.22.1",
+    "serverless-cloudflare-workers": "^1.2.0"
+  }
+}

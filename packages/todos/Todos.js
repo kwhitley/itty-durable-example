@@ -5,9 +5,9 @@ import {
   ThrowableRouter,
 } from 'itty-router-extras'
 
-import { DurableObject } from './DurableObject.js'
+import { IttyDurable } from './class/IttyDurable.js'
 
-export class Todos extends DurableObject {
+export class Todos extends IttyDurable {
   constructor(state, env) {
     super(state, env)
     this.items = [] // this will be detected for persisting automatically

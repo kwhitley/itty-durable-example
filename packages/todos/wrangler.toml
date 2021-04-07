@@ -14,7 +14,8 @@ kv-namespaces = [
 [durable_objects]
 bindings = [
   { name = "TODOS", class_name = "Todos" },
-  { name = "Foo", class_name = "Foo" }
+  { name = "Foo", class_name = "Foo" },
+  { name = "Magic", class_name = "Magic" }
 ]
 
 [build]

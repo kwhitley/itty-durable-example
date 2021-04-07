@@ -1,5 +1,6 @@
 import {
   json,
+  text,
   error,
   status,
   missing,
@@ -11,55 +12,83 @@ import {
 import { KVStore } from './class/KVStore'
 
 export { Todos } from './Todos'
-export { Foo } from './Foo'
+import { Foo, withFoo } from './durable/Foo'
 
-const createROE = Class => namespace => {
-  // create KV entry (`${class.name}|${namespace}` )
-}
+// generic middleware I would include with lib
+import { withDurables } from './class/IttyDurable'
 
-const createDurable = Class => (namespace, durable = undefined) => {
-  // 1. get id from namespace
-  // 2. get durable
-  // 3. createROE
-  // 4. return durable
-}
+// need to import durable object class to pass to durables middleware
+import { Magic } from './durable/Magic'
 
-const getDurable = Class => namespace => {
-  // 1. get both ROE and durable
-  // 2. if ROE, return durable
-  // 3. if not ROE, createDurable and return durable
-}
-
-class DurableObject {
-  persist() {
-
-  }
-
-  cache() {
-
-  }
-}
-
-
+// export durable object class, per spec
+export { Magic, Foo }
 
 const router = ThrowableRouter()
 
-// MIDDLEWARE embeds durable object instance from namespace param
-const withFoo = (request, env) => {
-  const { namespace } = request
-
-  if (namespace) {
-    const id = env.Foo.idFromName(namespace)
-    request.Foo = env.Foo.get(id)
-  }
-}
-
 router
-  .all('/foo/:namespace/:action?', withParams, withFoo, (request, env) =>
-    request.Foo.fetch(
-      'https://slick/' + (request.action || ''), // fake internal API for durable
-      request, // pass the entire request as options (to pass method, body, etc)
-    )
+  .get('/do-stuff-with-magic/:foo?', withDurables, withParams,
+    async ({ durables, foo }) => {
+      // we access a durable object from its ES6 class (assumes env binding to same name) and id
+      const magic = durables.get(Magic, 'test')
+
+      // then we fire some methods on the durable... these could all be done separately.
+      await Promise.all([
+        magic.increment(),
+        magic.increment(),
+        magic.increment(),
+      ])
+
+      // one last time for good measure
+      await magic.increment()
+
+      // now lets add some content to the durable
+      await (magic.foo = foo || 'bar')
+
+      // and return the contents
+      return magic.toJSON()
+    }
+  )
+
+  .get('/magic', withDurables, ({ durables }) => durables.get(Magic, 'test').toJSON())
+  .get('/magic/reset', withDurables, ({ durables }) => durables.get(Magic, 'test').clear())
+
+  .get('/magic/set/:what/:value', withParams, withDurables, async ({ what, value, durables }) => {
+    const magic = durables.get(Magic, 'test')
+
+    value = Number(value) || value
+    await (magic[what] = value)
+
+    return magic.toJSON()
+  })
+
+  // .all('/magic/:action?', withParams, withMagic, withContent,
+  //   ({ Magic, action, content }) => Magic[action]()
+  // )
+
+  .get('/magic/:action/:a?/:b?', withDurables, withParams,
+    async ({ durables, action, a, b }) => {
+      // we access a durable object from its ES6 class (assumes env binding to same name)
+      const durable = durables.get(Magic, 'test')
+
+      // transpose params from string if needed
+      a = Number(a) || a
+      b = Number(b) || b
+
+      // then we fire methods against it
+      // return await durable[action](a, b)
+
+      // this could easily look like this instead:
+
+      await Promise.all([
+        durable.increment(),
+        durable.increment(),
+        durable.increment(),
+      ])
+
+      await (durable.foo = 'bar')
+
+      return await durable.toJSON()
+    }
   )
 
 // GET /foo/bar --> returns contents of durable object 'bar' of class Foo
@@ -107,7 +136,5 @@ router
   .all('*', () => missing('Are you sure about that?'))
 
 export default {
-  fetch(request, env) {
-    return router.handle(request, env)      // handle passes any params to handlers/middleware
-  }
+  fetch: router.handle // handle passes any params to handlers/middleware
 }
