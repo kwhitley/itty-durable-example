@@ -1,6 +1,6 @@
-import { IttyDurable } from '../class/IttyDurable.js'
+import { IttyDurable, createIttyDurable } from '../class/IttyDurable.js'
 
-export class Magic extends IttyDurable {
+export class Magic extends createIttyDurable({ timestamps: true }) {
   constructor(state, env) {
     super(state, env)
     this.counter = 0
@@ -8,10 +8,6 @@ export class Magic extends IttyDurable {
 
   increment() {
     this.counter++
-  }
-
-  getTime() {
-    return { now: new Date }
   }
 
   add(a, b) {

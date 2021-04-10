@@ -566,109 +566,161 @@ var import_itty_router_extras3 = __toModule(require_dist());
 // class/IttyDurable.js
 var import_itty_router_extras2 = __toModule(require_dist());
 var import_itty_router = __toModule(require_itty_router_min());
-var IttyDurable = class {
-  constructor(state, env) {
-    this.state = state;
-    this.$ = {
-      defaultState: void 0
-    };
-    this.router = (0, import_itty_router_extras2.ThrowableRouter)();
-    this.router.post("/:action/:target", import_itty_router_extras2.withParams, import_itty_router_extras2.withContent, async (request, env2) => {
-      const {action, target, content = []} = request;
-      if (action === "call") {
-        const response = await this[target](...content);
-        if (response) {
-          return response instanceof Response ? response : (0, import_itty_router_extras2.json)(response);
+var createIttyDurable = (options = {}) => {
+  const {
+    timestamps = false,
+    persistOnChange = true,
+    alwaysReturnThis = true
+  } = options;
+  return class IttyDurableBase {
+    constructor(state, env) {
+      this.state = state;
+      this.$ = {
+        defaultState: void 0
+      };
+      this.router = (0, import_itty_router_extras2.ThrowableRouter)();
+      this.router.post("/:action/:target", import_itty_router_extras2.withParams, import_itty_router_extras2.withContent, async (request, env2) => {
+        const {action, target, content = []} = request;
+        request.originalState = this.toJSON();
+        if (action === "call") {
+          if (typeof this[target] !== "function") {
+            throw new import_itty_router_extras2.StatusError(500, `Durable Object ${this?.constructor?.name} does not contain method ${target}()`);
+          }
+          const response = await this[target](...content);
+          if (response) {
+            return response instanceof Response ? response : (0, import_itty_router_extras2.json)(response);
+          }
+        } else if (action === "set") {
+          this[target] = content;
+        } else if (action === "get-prop") {
+          const {target: target2} = request;
+          const persistable = this.getPersistable();
+          if (!persistable.hasOwnProperty(target2))
+            throw new import_itty_router_extras2.StatusError(500, `Property ${target2} does not exist in ${this?.constructor?.name}`);
+          return (0, import_itty_router_extras2.json)(this[target2]);
         }
-      } else if (action === "set") {
-        this[target] = content;
-      }
-    }, () => this.persist()).all("*", () => (0, import_itty_router_extras2.json)(this));
-    return new Proxy(this, {
-      get: (obj, prop) => typeof obj[prop] === "function" ? obj[prop].bind(this) : obj[prop]
-    });
-  }
-  getPersistable() {
-    const {$, state, router: router2, initializePromise, ...persistable} = this;
-    return persistable;
-  }
-  async persist() {
-    this.modified = new Date();
-    await this.state.storage.put("data", {
-      ...this.getPersistable()
-    });
-  }
-  async initialize() {
-    this.$.defaultState = JSON.stringify(this.getPersistable());
-    const stored = await this.state.storage.get("data") || {};
-    Object.assign(this, stored);
-    this.created = this.created || new Date();
-  }
-  async fetch(request, env) {
-    if (!this.initializePromise) {
-      this.initializePromise = this.initialize().catch((err) => {
-        this.initializePromise = void 0;
-        throw err;
+      }, (request) => {
+        if (persistOnChange && this.toJSON() !== request.originalState) {
+          this.persist();
+        }
+      });
+      return new Proxy(this, {
+        get: (obj, prop) => typeof obj[prop] === "function" ? obj[prop].bind(this) : obj[prop]
       });
     }
-    await this.initializePromise;
-    const response = await this.router.handle(request, env);
-    return response || (0, import_itty_router_extras2.error)(400, "Bad request to durable object");
-  }
-  clear() {
-    for (const key in this.getPersistable()) {
-      if (key !== "created") {
-        delete this[key];
+    getPersistable() {
+      const {$, state, router: router2, initializePromise, ...persistable} = this;
+      return persistable;
+    }
+    async persist() {
+      if (timestamps) {
+        this.modified = new Date();
+      }
+      await this.state.storage.put("data", {
+        ...this.getPersistable()
+      });
+    }
+    async initialize() {
+      this.$.defaultState = JSON.stringify(this.getPersistable());
+      const stored = await this.state.storage.get("data") || {};
+      Object.assign(this, stored);
+      if (timestamps) {
+        this.created = this.created || new Date();
       }
     }
-    Object.assign(this, JSON.parse(this.$.defaultState));
-  }
-  toJSON() {
-    return this.getPersistable();
-  }
-};
-var withDurables = (request, env) => {
-  request.durables = {
-    get: (Class, id) => {
-      try {
-        if (typeof id === "string") {
-          id = env[Class.name].idFromName(id);
-        }
-        const stub = env[Class.name].get(id);
-        const mock = new Class();
-        return new Proxy(stub, {
-          get: (obj, prop) => {
-            const origin = mock[prop];
-            return typeof origin === "function" && prop !== "fetch" ? (...args) => {
-              const url = "https://itty-durable/call/" + prop;
-              const req = {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json"
-                },
-                body: JSON.stringify(args)
-              };
-              return obj.fetch(url, req);
-            } : obj[prop];
-          },
-          set: async (obj, prop, value) => {
-            const url = "https://itty-durable/set/" + prop;
-            const req = {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify(value)
-            };
-            return await obj.fetch(url, req);
-            return true;
-          }
+    async fetch(request, env) {
+      if (!this.initializePromise) {
+        this.initializePromise = this.initialize().catch((err) => {
+          this.initializePromise = void 0;
+          throw err;
         });
-      } catch (err) {
-        throw new StatusError(500, "Could not find a matching Durable Object");
       }
+      await this.initializePromise;
+      if (alwaysReturnThis) {
+        this.router.all("*", () => (0, import_itty_router_extras2.json)(this));
+      }
+      const response = await this.router.handle(request, env);
+      return response || (0, import_itty_router_extras2.error)(400, "Bad request to durable object");
+    }
+    clear() {
+      for (const key in this.getPersistable()) {
+        if (key !== "created" || !timestamps) {
+          delete this[key];
+        }
+      }
+      Object.assign(this, JSON.parse(this.$.defaultState));
+    }
+    toJSON() {
+      return this.getPersistable();
     }
   };
+};
+var IttyDurable = createIttyDurable();
+var withDurables = (options = {}) => (request, env) => {
+  const {autoParse = false} = options;
+  const transformResponse = (response) => {
+    if (!autoParse)
+      return response;
+    try {
+      return response.json();
+    } catch (err) {
+    }
+    try {
+      return response.text();
+    } catch (err) {
+    }
+    return new Promise((cb) => cb());
+  };
+  request.durables = new Proxy(env, {
+    get: (obj, binding) => {
+      const durableBinding = env[binding];
+      if (!durableBinding || !durableBinding.idFromName) {
+        throw new import_itty_router_extras2.StatusError(500, `${binding} is not a valid Durable Object binding.`);
+      }
+      return {
+        get: (id, Class) => {
+          try {
+            if (typeof id === "string") {
+              id = durableBinding.idFromName(id);
+            }
+            const stub = durableBinding.get(id);
+            const mock = typeof Class === "function" && new Class();
+            const isValidMethod = (prop) => prop !== "fetch" && (!mock || typeof mock[prop] === "function");
+            return new Proxy(stub, {
+              get: (obj2, prop) => isValidMethod(prop) ? (...args) => {
+                const url = "https://itty-durable/call/" + prop;
+                const req = {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json"
+                  },
+                  body: JSON.stringify(args)
+                };
+                return obj2.fetch(url, req).then(transformResponse);
+              } : obj2.fetch("https://itty-durable/get-prop/" + prop, {method: "POST"}).then(transformResponse),
+              set: async (obj2, prop, value) => {
+                const url = "https://itty-durable/set/" + prop;
+                const req = {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json"
+                  },
+                  body: JSON.stringify(value)
+                };
+                return await obj2.fetch(url, req);
+                return true;
+              }
+            });
+          } catch (err) {
+            throw new import_itty_router_extras2.StatusError(500, err.message);
+          }
+        }
+      };
+    }
+  });
+  request.proxy = new Proxy(request.proxy || request, {
+    get: (obj, prop) => obj.hasOwnProperty(prop) ? obj[prop] : obj.durables[prop]
+  });
 };
 
 // Todos.js
@@ -733,16 +785,13 @@ var withFoo = (request, env) => {
 };
 
 // durable/Magic.js
-var Magic = class extends IttyDurable {
+var Magic = class extends createIttyDurable({timestamps: true}) {
   constructor(state, env) {
     super(state, env);
     this.counter = 0;
   }
   increment() {
     this.counter++;
-  }
-  getTime() {
-    return {now: new Date()};
   }
   add(a, b) {
     return a + b;
@@ -751,33 +800,16 @@ var Magic = class extends IttyDurable {
 
 // index.js
 var router = (0, import_itty_router_extras5.ThrowableRouter)();
-router.get("/do-stuff-with-magic/:foo?", withDurables, import_itty_router_extras5.withParams, async ({durables, foo}) => {
-  const magic = durables.get(Magic, "test");
+router.all("*", withDurables()).get("/do-stuff-with-magic", async ({Magic: Magic2}) => {
+  const magic = Magic2.get("test");
   await Promise.all([
     magic.increment(),
     magic.increment(),
     magic.increment()
   ]);
-  await magic.increment();
-  await (magic.foo = foo || "bar");
-  return magic.toJSON();
-}).get("/magic", withDurables, ({durables}) => durables.get(Magic, "test").toJSON()).get("/magic/reset", withDurables, ({durables}) => durables.get(Magic, "test").clear()).get("/magic/set/:what/:value", import_itty_router_extras5.withParams, withDurables, async ({what, value, durables}) => {
-  const magic = durables.get(Magic, "test");
-  value = Number(value) || value;
-  await (magic[what] = value);
-  return magic.toJSON();
-}).get("/magic/:action/:a?/:b?", withDurables, import_itty_router_extras5.withParams, async ({durables, action, a, b}) => {
-  const durable = durables.get(Magic, "test");
-  a = Number(a) || a;
-  b = Number(b) || b;
-  await Promise.all([
-    durable.increment(),
-    durable.increment(),
-    durable.increment()
-  ]);
-  await (durable.foo = "bar");
-  return await durable.toJSON();
-}).all("/foo/:namespace/:action?", import_itty_router_extras5.withParams, withFoo, async (request, env) => {
+  const {counter} = await magic.toJSON().then((r) => r.json());
+  return (0, import_itty_router_extras5.json)({counter});
+}).get("/magic", ({Magic: Magic2}) => Magic2.get("test").toJSON()).get("/magic/reset", ({Magic: Magic2}) => Magic2.get("test").clear()).get("/magic/counter", ({durables}) => durables.Magic.get("test", Magic).counter).get("/magic/fail", ({Magic: Magic2}) => Magic2.get("test").fail()).get("/invalid-do/fail", ({InvalidDO}) => InvalidDO.get("test").fail()).get("/magic/:action/:a?/:b?", import_itty_router_extras5.withParams, ({Magic: Magic2, action, a, b}) => Magic2.get("test")[action](Number(a), Number(b))).all("/foo/:namespace/:action?", import_itty_router_extras5.withParams, withFoo, async (request, env) => {
   const {namespace, action, Foo: Foo2} = request;
   const kv = new KVStore({
     path: "Foo",
