@@ -1,4 +1,4 @@
-import { IttyDurable, createIttyDurable } from '../class/IttyDurable.js'
+import { createIttyDurable } from 'itty-durable'
 
 export class Magic extends createIttyDurable({ timestamps: true }) {
   constructor(state, env) {

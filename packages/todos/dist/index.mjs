@@ -401,6 +401,107 @@ var require_collections = __commonJS((exports) => {
   };
 });
 
+// node_modules/itty-durable/itty-durable.js
+var require_itty_durable = __commonJS((exports, module) => {
+  var {error: error3, json: json5, withParams: withParams4, withContent: withContent4, ThrowableRouter: ThrowableRouter4, StatusError: StatusError4} = require_dist();
+  var createIttyDurable3 = (t = {}) => {
+    const {timestamps: e = false, persistOnChange: i = true, alwaysReturnThis: s = true} = t;
+    return class {
+      constructor(t2, e2) {
+        return this.state = t2, this.$ = {defaultState: void 0}, this.router = ThrowableRouter4(), this.router.post("/:action/:target", withParams4, withContent4, async (t3, e3) => {
+          const {action: i2, target: s2, content: r = []} = t3;
+          if (t3.originalState = this.toJSON(), i2 === "call") {
+            if (typeof this[s2] != "function")
+              throw new StatusError4(500, `Durable Object ${this.constructor.name} does not contain method ${s2}()`);
+            const t4 = await this[s2](...r);
+            if (t4)
+              return t4 instanceof Response ? t4 : json5(t4);
+          } else if (i2 === "set")
+            this[s2] = r;
+          else if (i2 === "get-prop") {
+            const {target: e4} = t3;
+            if (!this.getPersistable().hasOwnProperty(e4))
+              throw new StatusError4(500, `Property ${e4} does not exist in ${this.constructor.name}`);
+            return json5(this[e4]);
+          }
+        }, (t3) => {
+          i && this.toJSON() !== t3.originalState && this.persist();
+        }), new Proxy(this, {get: (t3, e3) => typeof t3[e3] == "function" ? t3[e3].bind(this) : t3[e3]});
+      }
+      getPersistable() {
+        const {$: t2, state: e2, router: i2, initializePromise: s2, ...r} = this;
+        return r;
+      }
+      async persist() {
+        e && (this.modified = new Date()), await this.state.storage.put("data", {...this.getPersistable()});
+      }
+      async initialize() {
+        this.$.defaultState = JSON.stringify(this.getPersistable());
+        const t2 = await this.state.storage.get("data") || {};
+        Object.assign(this, t2), e && (this.created = this.created || new Date());
+      }
+      async fetch(t2, e2) {
+        return this.initializePromise || (this.initializePromise = this.initialize().catch((t3) => {
+          throw this.initializePromise = void 0, t3;
+        })), await this.initializePromise, s && this.router.all("*", () => json5(this)), await this.router.handle(t2, e2) || error3(400, "Bad request to durable object");
+      }
+      clear() {
+        for (const t2 in this.getPersistable())
+          t2 === "created" && e || Reflect.deleteProperty(this, t2);
+        Object.assign(this, JSON.parse(this.$.defaultState));
+      }
+      toJSON() {
+        return this.getPersistable();
+      }
+    };
+  };
+  var IttyDurable2 = createIttyDurable3();
+  module.exports = {createIttyDurable: createIttyDurable3, IttyDurable: IttyDurable2};
+});
+
+// node_modules/itty-durable/with-durables.js
+var require_with_durables = __commonJS((exports, module) => {
+  var {StatusError: StatusError4} = require_dist();
+  var withDurables2 = (t = {}) => (e, r) => {
+    const {autoParse: o = false} = t, n = (t2) => {
+      if (!o)
+        return t2;
+      try {
+        return t2.json();
+      } catch (t3) {
+      }
+      try {
+        return t2.text();
+      } catch (t3) {
+      }
+      return new Promise((t3) => t3());
+    };
+    e.durables = new Proxy(r, {get: (t2, o2) => {
+      const s = r[o2];
+      if (!s || !s.idFromName)
+        throw new StatusError4(500, `${o2} is not a valid Durable Object binding.`);
+      return {get: (t3, o3) => {
+        try {
+          typeof t3 == "string" && (t3 = s.idFromName(t3));
+          const a = s.get(t3), i = typeof o3 == "function" && new o3(e, r), u = (t4) => t4 !== "fetch" && (!i || typeof i[t4] == "function");
+          return new Proxy(a, {get: (t4, e2) => u(e2) ? (...r2) => {
+            const o4 = `https://itty-durable/call/${e2}`, s2 = {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(r2)};
+            return t4.fetch(o4, s2).then(n);
+          } : t4.fetch(`https://itty-durable/get-prop/${e2}`, {method: "POST"}).then(n), set: (t4, e2, r2) => t4.fetch(`https://itty-durable/set/${e2}`, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(r2)})});
+        } catch (t4) {
+          throw new StatusError4(500, t4.message);
+        }
+      }};
+    }}), e.proxy = new Proxy(e.proxy || e, {get: (t2, e2) => t2.hasOwnProperty(e2) ? t2[e2] : t2.durables[e2]});
+  };
+  module.exports = {withDurables: withDurables2};
+});
+
+// node_modules/itty-durable/index.js
+var require_itty_durable2 = __commonJS((exports, module) => {
+  module.exports = {...require_itty_durable(), ...require_with_durables()};
+});
+
 // index.js
 var import_itty_router_extras5 = __toModule(require_dist());
 
@@ -656,72 +757,6 @@ var createIttyDurable = (options = {}) => {
   };
 };
 var IttyDurable = createIttyDurable();
-var withDurables = (options = {}) => (request, env) => {
-  const {autoParse = false} = options;
-  const transformResponse = (response) => {
-    if (!autoParse)
-      return response;
-    try {
-      return response.json();
-    } catch (err) {
-    }
-    try {
-      return response.text();
-    } catch (err) {
-    }
-    return new Promise((cb) => cb());
-  };
-  request.durables = new Proxy(env, {
-    get: (obj, binding) => {
-      const durableBinding = env[binding];
-      if (!durableBinding || !durableBinding.idFromName) {
-        throw new import_itty_router_extras2.StatusError(500, `${binding} is not a valid Durable Object binding.`);
-      }
-      return {
-        get: (id, Class) => {
-          try {
-            if (typeof id === "string") {
-              id = durableBinding.idFromName(id);
-            }
-            const stub = durableBinding.get(id);
-            const mock = typeof Class === "function" && new Class();
-            const isValidMethod = (prop) => prop !== "fetch" && (!mock || typeof mock[prop] === "function");
-            return new Proxy(stub, {
-              get: (obj2, prop) => isValidMethod(prop) ? (...args) => {
-                const url = "https://itty-durable/call/" + prop;
-                const req = {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json"
-                  },
-                  body: JSON.stringify(args)
-                };
-                return obj2.fetch(url, req).then(transformResponse);
-              } : obj2.fetch("https://itty-durable/get-prop/" + prop, {method: "POST"}).then(transformResponse),
-              set: async (obj2, prop, value) => {
-                const url = "https://itty-durable/set/" + prop;
-                const req = {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json"
-                  },
-                  body: JSON.stringify(value)
-                };
-                return await obj2.fetch(url, req);
-                return true;
-              }
-            });
-          } catch (err) {
-            throw new import_itty_router_extras2.StatusError(500, err.message);
-          }
-        }
-      };
-    }
-  });
-  request.proxy = new Proxy(request.proxy || request, {
-    get: (obj, prop) => obj.hasOwnProperty(prop) ? obj[prop] : obj.durables[prop]
-  });
-};
 
 // Todos.js
 var Todos = class extends IttyDurable {
@@ -784,8 +819,12 @@ var withFoo = (request, env) => {
   }
 };
 
+// index.js
+var import_itty_durable2 = __toModule(require_itty_durable2());
+
 // durable/Magic.js
-var Magic = class extends createIttyDurable({timestamps: true}) {
+var import_itty_durable = __toModule(require_itty_durable2());
+var Magic = class extends (0, import_itty_durable.createIttyDurable)({timestamps: true}) {
   constructor(state, env) {
     super(state, env);
     this.counter = 0;
@@ -800,7 +839,7 @@ var Magic = class extends createIttyDurable({timestamps: true}) {
 
 // index.js
 var router = (0, import_itty_router_extras5.ThrowableRouter)();
-router.all("*", withDurables()).get("/do-stuff-with-magic", async ({Magic: Magic2}) => {
+router.all("*", (0, import_itty_durable2.withDurables)()).get("/do-stuff-with-magic", async ({Magic: Magic2}) => {
   const magic = Magic2.get("test");
   await Promise.all([
     magic.increment(),

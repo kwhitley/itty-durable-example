@@ -15,7 +15,7 @@ export { Todos } from './Todos'
 import { Foo, withFoo } from './durable/Foo'
 
 // generic middleware I would include with lib
-import { withDurables } from './class/IttyDurable'
+import { withDurables } from 'itty-durable'
 
 // need to import durable object class to pass to durables middleware (only when accessing instance props)
 import { Magic } from './durable/Magic'
@@ -23,7 +23,7 @@ import { Magic } from './durable/Magic'
 // export durable object class, per spec
 export { Magic, Foo }
 
-const router = ThrowableRouter({ base: '/magic' })
+const router = ThrowableRouter()
 
 router
   // add upstream middleware to allow for all DO instance magic below

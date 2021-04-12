@@ -17,6 +17,7 @@
   "dependencies": {
     "auto-bind": "^4.0.0",
     "deepmerge": "^4.2.2",
+    "itty-durable": "^0.1.2",
     "itty-router": "^2.3.2",
     "itty-router-extras": "^0.2.3",
     "supergeneric": "^1.1.0"
