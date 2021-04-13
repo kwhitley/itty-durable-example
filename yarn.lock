@@ -48,10 +48,10 @@
   "resolved" "https://registry.npmjs.org/concat-map/-/concat-map-0.0.1.tgz"
   "version" "0.0.1"
 
-"esbuild@^0.11.4":
-  "integrity" "sha512-qWGlOOTwyTn4f846LoR47Mif4Aek4rY9ChdXN7q7G15HpDYq3pxwnPFWe2os/jOq8naFh2Z+FqWfkq8ZP6kATw=="
-  "resolved" "https://registry.npmjs.org/esbuild/-/esbuild-0.11.4.tgz"
-  "version" "0.11.4"
+"esbuild@^0.11.10":
+  "integrity" "sha512-XvGbf+UreVFA24Tlk6sNOqNcvF2z49XAZt4E7A4H80+yqn944QOLTTxaU0lkdYNtZKFiITNea+VxmtrfjvnLPA=="
+  "resolved" "https://registry.npmjs.org/esbuild/-/esbuild-0.11.10.tgz"
+  "version" "0.11.10"
 
 "follow-redirects@^1.10.0":
   "integrity" "sha512-6mPTgLxYm3r6Bkkg0vNM0HTjfGrOEtsfbhagQvbxDEsEkpNhw582upBaoRZylzen6krEmxXJgt9Ju6HiI4O7BA=="
@@ -95,20 +95,20 @@
   "resolved" "https://registry.npmjs.org/inherits/-/inherits-2.0.4.tgz"
   "version" "2.0.4"
 
-"itty-durable@^0.1.2":
-  "integrity" "sha512-y1lPmoO0vXQG9xK24set4jST8Rsawdf6hmfGO3EiUuitfGIDuAr0lLMCACxEre96hN7BTs6xPKQrNkAWA2CMOA=="
-  "resolved" "https://registry.npmjs.org/itty-durable/-/itty-durable-0.1.2.tgz"
-  "version" "0.1.2"
+"itty-durable@^0.1.5":
+  "integrity" "sha512-jPMh656ouDA38ytWtlE3jgHpYREqKeaSilnfem3+8pIiBxJcyEtA9/TNmp4PgxKIbvYzntw8cD1WWL+Xgo0Ayw=="
+  "resolved" "https://registry.npmjs.org/itty-durable/-/itty-durable-0.1.5.tgz"
+  "version" "0.1.5"
 
 "itty-router-extras@^0.4.0":
   "integrity" "sha512-0NaPG8sI9lEpkXr36uCARzKkcstqZ1UKBvM9sk6awJviVMndmm5/ffhBuBzzMRrImCvfG2UERDhwuPnl0gJqYw=="
   "resolved" "https://registry.npmjs.org/itty-router-extras/-/itty-router-extras-0.4.0.tgz"
   "version" "0.4.0"
 
-"itty-router@^2.3.2":
-  "integrity" "sha512-z0TKy90TitVzgkf/cVq3eM2tb7wmVeHtC/9b1tChj409I1fLT5xXFnqH/LXUQljQNM6/r2zS7cEyu8WgY1MKig=="
-  "resolved" "https://registry.npmjs.org/itty-router/-/itty-router-2.3.2.tgz"
-  "version" "2.3.2"
+"itty-router@^2.3.6":
+  "integrity" "sha512-rBCVdpNa7NFFskwWzXAT846bCMIIrUq9Nhntr6w6qhX7MuGWFWElQYQ6DQ4XCOGsNQzEpfTXHSWQBpIDjVbIiw=="
+  "resolved" "https://registry.npmjs.org/itty-router/-/itty-router-2.3.6.tgz"
+  "version" "2.3.6"
 
 "minimatch@^3.0.4":
   "integrity" "sha512-yJHVQEhyqPLUTgt9B83PXu6W3rx4MvvHvSUvToogpwoGDOUQ+yDrR0HRot+yOCdCO7u4hX3pWft6kWBBcqh0UA=="
@@ -149,10 +149,10 @@
   "resolved" "https://registry.npmjs.org/path-is-absolute/-/path-is-absolute-1.0.1.tgz"
   "version" "1.0.1"
 
-"prettier@^1.18.2":
-  "integrity" "sha512-s7PoyDv/II1ObgQunCbB9PdLmUcBZcnWOcxDh7O0N/UwDEsHyqkW+Qh28jW+mVuCdx7gLB0BotYI1Y6uI9iyew=="
-  "resolved" "https://registry.npmjs.org/prettier/-/prettier-1.19.1.tgz"
-  "version" "1.19.1"
+"prettier@^2.2.1":
+  "integrity" "sha512-PqyhM2yCjg/oKkFPtTGUojv7gnZAoG80ttl45O6x2Ug/rMJw4wcc9k6aaf2hibP7BGVCCM33gZoGjyvt9mm16Q=="
+  "resolved" "https://registry.npmjs.org/prettier/-/prettier-2.2.1.tgz"
+  "version" "2.2.1"
 
 "rimraf@^3.0.2":
   "integrity" "sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA=="

@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "do-todos",
+  "name": "itty-durable-example",
   "version": "0.1.0",
   "description": "Example repo for itty-durable",
   "module": "./dist/index.mjs",
@@ -12,12 +12,12 @@
   "license": "MIT",
   "devDependencies": {
     "@cloudflare/wrangler": "^1.15.0-custom-builds-rc.2",
-    "esbuild": "^0.11.4",
-    "prettier": "^1.18.2"
+    "esbuild": "^0.11.10",
+    "prettier": "^2.2.1"
   },
   "dependencies": {
-    "itty-durable": "^0.1.2",
-    "itty-router": "^2.3.2",
+    "itty-durable": "^0.1.5",
+    "itty-router": "^2.3.6",
     "itty-router-extras": "^0.4.0"
   }
 }
