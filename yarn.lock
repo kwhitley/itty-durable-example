@@ -100,10 +100,10 @@
   "resolved" "https://registry.npmjs.org/itty-durable/-/itty-durable-0.1.2.tgz"
   "version" "0.1.2"
 
-"itty-router-extras@^0.3.0-next.2":
-  "integrity" "sha512-DnydTX21lu8PBpUB13CZ/67lNAg2Zw0KQUdjYQxThmhs5ezgGxRNv2o+0YqRSgkKpZy+Z7KgoUMge7m0jiU8rw=="
-  "resolved" "https://registry.npmjs.org/itty-router-extras/-/itty-router-extras-0.3.0-next.2.tgz"
-  "version" "0.3.0-next.2"
+"itty-router-extras@^0.4.0":
+  "integrity" "sha512-0NaPG8sI9lEpkXr36uCARzKkcstqZ1UKBvM9sk6awJviVMndmm5/ffhBuBzzMRrImCvfG2UERDhwuPnl0gJqYw=="
+  "resolved" "https://registry.npmjs.org/itty-router-extras/-/itty-router-extras-0.4.0.tgz"
+  "version" "0.4.0"
 
 "itty-router@^2.3.2":
   "integrity" "sha512-z0TKy90TitVzgkf/cVq3eM2tb7wmVeHtC/9b1tChj409I1fLT5xXFnqH/LXUQljQNM6/r2zS7cEyu8WgY1MKig=="

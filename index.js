@@ -18,6 +18,7 @@ export { Counter }
 const router = ThrowableRouter({ base: '/itty-durable/counter', stack: true })
 
 router
+  .get('*', withParams)
   .get('/parsed', withDurables({ autoParse: true }),
     async ({ Counter }) => {
       // this is now returned parsed JSON, not a Response so that we may explode it
@@ -26,6 +27,9 @@ router
       return text(`Counter value ${counter} last changed at ${modified}`)
     }
   )
+
+  .get('/route/:params/:test', ({ params, test }) => json({ params, test }))
+
   // add upstream middleware to allow for all DO instance counter below
   .all('*', withDurables())
 
