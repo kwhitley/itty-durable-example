@@ -5,7 +5,7 @@ This is an example showing general usage of itty-durable (simplification of [Clo
 ### Getting started:
 1. clone repo
 2. `npm install`
-3. modify `wrangler.toml` to your own endpoints/account/zone
+3. rename `wrangler.toml.example` to `wrangler.toml` and inject your own endpoints/account/zone
 4. `wrangler publish --new-class Counter` (first time publishing)
 5. `wrangler publish` (subsequent times)
 
