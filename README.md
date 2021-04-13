@@ -11,28 +11,28 @@ This is an example showing general usage of itty-durable (simplification of [Clo
 
 ### Example endpoint usage (with output):
 ```js
-// GET https://do.slick.af/itty-durable/counter/reset
+// GET https://example.com/counter/reset
 {
   "created": "2021-04-13T17:33:45.097Z",
   "counter": 0,
   "modified": "2021-04-13T19:31:15.668Z"
 }
 
-// GET https://do.slick.af/itty-durable/counter/do-stuff
-// GET https://do.slick.af/itty-durable/counter/do-stuff
+// GET https://example.com/counter/do-stuff
+// GET https://example.com/counter/do-stuff
 {
 "created": "2021-04-13T17:33:45.097Z",
 "counter": 6,
 "modified": "2021-04-13T19:31:52.770Z"
 }
 
-// GET https://do.slick.af/itty-durable/counter/value
+// GET https://example.com/counter/value
 6
 
-// https://do.slick.af/itty-durable/counter/parsed
+// https://example.com/counter/parsed
 Counter value 6 last changed at 2021-04-13T19:31:52.770Z
 
-// GET https://do.slick.af/itty-durable/counter/set/foo/bar
+// GET https://example.com/counter/set/foo/bar
 {
   "counter": 6,
   "created": "2021-04-13T17:33:45.097Z",
@@ -40,7 +40,7 @@ Counter value 6 last changed at 2021-04-13T19:31:52.770Z
   "foo": "bar"
 }
 
-// GET https://do.slick.af/itty-durable/counter/increment
+// GET https://example.com/counter/increment
 {
   "counter": 7,
   "created": "2021-04-13T17:33:45.097Z",
@@ -48,6 +48,6 @@ Counter value 6 last changed at 2021-04-13T19:31:52.770Z
   "foo": "bar"
 }
 
-// GET https://do.slick.af/itty-durable/counter/add/40/2
+// GET https://example.com/counter/add/40/2
 42
 ```
