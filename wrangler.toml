@@ -1,3 +1,23 @@
-name = "slick-af"
 account_id = "ac29ce961091a45f22b60d762e3e33a8"
 zone_id = "92425ae93828ef81948967142d28db13"
+name = "do-itty-durable-example"
+type = "javascript"
+workers_dev = false
+routes = [
+  "do.slick.af/itty-durable/counter/*",
+  "do.slick.af/itty-durable/counter"
+]
+
+[durable_objects]
+bindings = [
+  { name = "Counter", class_name = "Counter" }
+]
+
+[build]
+upload_format = "modules"
+command = "npm install && npm run build"
+cwd = "."
+watch_dir = "src"
+upload_dir = "dist"
+upload_include = []
+upload_exclude = ["*.map"]
