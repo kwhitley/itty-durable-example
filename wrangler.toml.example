@@ -1,11 +1,11 @@
-account_id = "ac29ce961091a45f22b60d762e3e33a8"
-zone_id = "92425ae93828ef81948967142d28db13"
-name = "do-itty-durable-example"
+account_id = "{YOUR_CLOUDFLARE_WORKERS_ACCOUNT_ID}"
+zone_id = "{YOUR_CLOUDFLARE_WORKERS_ZONE_ID}"
+name = "your-script-name"
 type = "javascript"
 workers_dev = false
 routes = [
-  "do.slick.af/itty-durable/counter/*",
-  "do.slick.af/itty-durable/counter"
+  "example.com/counter/*",
+  "example.com/counter"
 ]
 
 [durable_objects]
