@@ -10,7 +10,11 @@ export class Counter extends createIttyDurable({ timestamps: true }) {
     this.counter++
   }
 
+  set(prop, value) {
+    this[prop] = value
+  }
+
   add(a, b) {
-    return a + b
+    return Number(a) + Number(b)
   }
 }

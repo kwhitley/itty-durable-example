@@ -18,7 +18,6 @@ export { Counter }
 const router = ThrowableRouter({ base: '/itty-durable/counter', stack: true })
 
 router
-  .get('*', withParams)
   .get('/parsed', withDurables({ autoParse: true }),
     async ({ Counter }) => {
       // this is now returned parsed JSON, not a Response so that we may explode it
@@ -27,8 +26,6 @@ router
       return text(`Counter value ${counter} last changed at ${modified}`)
     }
   )
-
-  .get('/route/:params/:test', ({ params, test }) => json({ params, test }))
 
   // add upstream middleware to allow for all DO instance counter below
   .all('*', withDurables())
@@ -58,20 +55,11 @@ router
   .get('/reset', ({ Counter }) => Counter.get('test').clear())
 
   // to access/return a DO property directly, must pass base class to stub.get(id, Class)
-  .get('/value', ({ durables }) => durables.Counter.get('test', Counter).counter)
-
-  // this should throw
-  .get('/fail/accident', ({ Counter }) => Counter.this.will.fail)
-
-  // this should throw
-  .get('/fail', ({ Counter }) => Counter.get('test').fail())
-
-  // this should throw as well
-  .get('/invalid-do/fail', ({ InvalidDO }) => InvalidDO.get('test').fail())
+  .get('/value', request => request.Counter.get('test', Counter).counter)
 
   // will pass on requests to the durable... (e.g. /add/3/4 => 7)
   .get('/:action/:a?/:b?', withParams,
-    ({ Counter, action, a, b }) => Counter.get('test')[action](Number(a), Number(b))
+    ({ Counter, action, a, b }) => Counter.get('test')[action](a, b)
   )
 
   // all else gets a 404
