@@ -1,22 +1,31 @@
 import {
-  json,
   error,
+  json,
   missing,
-  withParams,
   StatusError,
+  text,
   ThrowableRouter,
+  withParams,
 } from 'itty-router-extras'
 import { withDurables } from 'itty-durable'
 
 // need to import durable object class to pass to durables middleware (only when accessing instance props)
-import { Counter } from './durable/Counter'
+import { Counter } from './Counter'
 
 // export durable object class, per spec
 export { Counter }
 
-const router = ThrowableRouter({ base: '/itty-durable/counter' })
+const router = ThrowableRouter({ base: '/itty-durable/counter', stack: true })
 
 router
+  .get('/parsed', withDurables({ autoParse: true }),
+    async ({ Counter }) => {
+      // this is now returned parsed JSON, not a Response so that we may explode it
+      const { counter, modified } = await Counter.get('test').toJSON()
+
+      return text(`Counter value ${counter} last changed at ${modified}`)
+    }
+  )
   // add upstream middleware to allow for all DO instance counter below
   .all('*', withDurables())
 
@@ -32,12 +41,9 @@ router
         counter.increment(),
       ])
 
-      // unless withDurables({ autoParse: true }) is used, instance methods
-      // return with JSON Response, therefore must be parsed to use
-      const { counter } = await counter.toJSON().then(r => r.json())
-
-      // and return the contents
-      return json({ counter })
+      // all instance calls return a promise to a JSON-formatted Response
+      // unless withDurables({ autoParse: true }) is used
+      return counter.toJSON()
     }
   )
 
@@ -47,8 +53,11 @@ router
   // reset the durable
   .get('/reset', ({ Counter }) => Counter.get('test').clear())
 
-  // here we get the DO off request.durables because we'll need to pass the class in as well
+  // to access/return a DO property directly, must pass base class to stub.get(id, Class)
   .get('/value', ({ durables }) => durables.Counter.get('test', Counter).counter)
+
+  // this should throw
+  .get('/fail/accident', ({ Counter }) => Counter.this.will.fail)
 
   // this should throw
   .get('/fail', ({ Counter }) => Counter.get('test').fail())

@@ -2,10 +2,6 @@
 
 # dependencies
 /node_modules
-/packages/**/node_modules
-/.pnp
-.pnp.js
-.serverless
 
 # testing
 /coverage
