@@ -51,9 +51,6 @@ router
   // get get the durable itself... returns JSON Response, so no need to wrap
   .get('/', ({ Counter }) => Counter.get('test').toJSON())
 
-  // reset the durable
-  .get('/reset', ({ Counter }) => Counter.get('test').clear())
-
   // to access/return a DO property directly, must pass base class to stub.get(id, Class)
   .get('/value', request => request.Counter.get('test', Counter).counter)
 

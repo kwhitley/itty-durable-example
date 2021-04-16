@@ -1,6 +1,6 @@
-import { createIttyDurable } from 'itty-durable'
+import { IttyDurable } from 'itty-durable'
 
-export class Counter extends createIttyDurable({ timestamps: true }) {
+export class Counter extends IttyDurable {
   constructor(state, env) {
     super(state, env)
     this.counter = 0
