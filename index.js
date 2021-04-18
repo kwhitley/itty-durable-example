@@ -7,56 +7,50 @@ import {
   ThrowableRouter,
   withParams,
 } from 'itty-router-extras'
-import { withDurables } from 'itty-durable'
+import { withDurables } from './with-durables'
 
 // need to import durable object class to pass to durables middleware (only when accessing instance props)
 import { Counter } from './Counter'
+import { Counters } from './Counters'
 
 // export durable object class, per spec
-export { Counter }
+export { Counter, Counters }
 
-const router = ThrowableRouter({ base: '/itty-durable/counter', stack: true })
+const router = ThrowableRouter({ base: '/itty-durable/counters', stack: true })
+
+// middleware to check existance of counter before continuing
+const withExistingCounters = async ({ params, Counters }) => {
+  const exists = await Counters.get('all', { parse: true }).has(params.id)
+
+  if (!exists) {
+    return missing(`Counter ${params.id} not found.`)
+  }
+}
+
+// convenience middleware to expose a single instance of the Counters DO
+const withListOfCounters = request => {
+  request.ListOfCounters = request.Counters.get('all')
+}
 
 router
-  .get('/parsed', withDurables({ autoParse: true }),
-    async ({ Counter }) => {
-      // this is now returned parsed JSON, not a Response so that we may explode it
-      const { counter, modified } = await Counter.get('test').toJSON()
+  // add withDurables() middleware, then withListOfCounters middleware
+  .get('*', withDurables({ classes: { Counter, Counters } }), withListOfCounters)
 
-      return text(`Counter value ${counter} last changed at ${modified}`)
-    }
-  )
+  // expose Counters routes first
+  .get('/', ({ ListOfCounters }) => ListOfCounters.counters)
+  .get('/values', ({ ListOfCounters }) => ListOfCounters.values)
+  .get('/total', ({ ListOfCounters }) => ListOfCounters.total)
+  .get('/clear', ({ ListOfCounters }) => ListOfCounters.clearAll())
+  .get('/create/:id', withParams, ({ id, ListOfCounters }) => ListOfCounters.create(id))
+  .get('/delete/:id', withParams, ({ id, ListOfCounters }) => ListOfCounters.delete(id))
 
-  // add upstream middleware to allow for all DO instance counter below
-  .all('*', withDurables())
+  // then failover to counters/:id routes
+  .get('/:id', withParams, withExistingCounters, ({ id, Counter }) => Counter.get(id).toJSON())
 
-  // example route with multiple calls to DO
-  .get('/do-stuff',
-    async ({ Counter }) => {
-      const counter = Counter.get('test')
-
-      // then we fire some methods on the durable... these could all be done separately.
-      await Promise.all([
-        counter.increment(),
-        counter.increment(),
-        counter.increment(),
-      ])
-
-      // all instance calls return a promise to a JSON-formatted Response
-      // unless withDurables({ autoParse: true }) is used
-      return counter.toJSON()
-    }
-  )
-
-  // get get the durable itself... returns JSON Response, so no need to wrap
-  .get('/', ({ Counter }) => Counter.get('test').toJSON())
-
-  // to access/return a DO property directly, must pass base class to stub.get(id, Class)
-  .get('/value', request => request.Counter.get('test', Counter).counter)
-
-  // will pass on requests to the durable... (e.g. /add/3/4 => 7)
-  .get('/:action/:a?/:b?', withParams,
-    ({ Counter, action, a, b }) => Counter.get('test')[action](a, b)
+  // for this, we execute unknown actions on the durable, passing in up to two params
+  // Example: "counters/my-counter/add/4/7"
+  .get('/:id/:action/:a?/:b?', withParams, withExistingCounters,
+    ({ id, action, a, b, Counter }) => Counter.get(id)[action](a, b)
   )
 
   // all else gets a 404
