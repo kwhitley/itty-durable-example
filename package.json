@@ -11,8 +11,8 @@
   "author": "Kevin Whitley <krwhitley@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "@cloudflare/wrangler": "=1.15.0-custom-builds-rc.2",
-    "esbuild": "^0.11.11",
+    "@cloudflare/wrangler": "^1.19.5",
+    "esbuild": "^0.13.13",
     "prettier": "^2.2.1"
   },
   "dependencies": {

@@ -15,7 +15,7 @@ import { Counter } from './Counter'
 // export durable object class, per spec
 export { Counter }
 
-const router = ThrowableRouter({ base: '/itty-durable/counter', stack: true })
+const router = ThrowableRouter({ base: '/example', stack: true })
 
 router
   .get('/parsed', withDurables({ autoParse: true }),
